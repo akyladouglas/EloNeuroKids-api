@@ -19,4 +19,17 @@ export class Patient {
     }
     return age;
   }
+
+  updateDetails(name?: string, birthDate?: Date, diagnosis?: string, isActive?: boolean): void {
+    if (name !== undefined) this.name = name;
+    if (birthDate !== undefined) this.birthDate = birthDate;
+    if (diagnosis !== undefined) this.diagnosis = diagnosis;
+    if (isActive !== undefined) this.isActive = isActive;
+    this.updatedAt = new Date();
+  }
+
+  deactivate(): void {
+    this.isActive = false;
+    this.updatedAt = new Date();
+  }
 }

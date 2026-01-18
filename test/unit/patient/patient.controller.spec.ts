@@ -2,14 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PatientController } from '@presentation/controllers/patient.controller';
 import { PatientService } from '@application/services/patient.service';
 import { CreatePatientDto } from '@dtos/create-patient.dto';
+import { PatientCreatedResponseDto } from '@dtos/patient-created-response.dto';
+import { PatientDetailsResponseDto } from '@dtos/patient-details-response.dto';
 import { UpdatePatientDto } from '@dtos/update-patient.dto';
-import { PatientResponseDto } from '@dtos/patient-response.dto';
+
+// Mock do módulo 'uuid' APENAS para este arquivo de teste
+jest.mock('uuid', () => ({
+  v4: () => 'generated-uuid',
+}));
 
 describe('Controlador de Pacientes', () => {
   let controller: PatientController;
   let service: PatientService;
 
-  const mockPatientResponse: PatientResponseDto = {
+  const mockPatientCreatedResponse: PatientCreatedResponseDto = {
+    id: 'uuid-1234',
+  };
+
+  const mockPatientDetailsResponse: PatientDetailsResponseDto = {
     id: 'uuid-1234',
     name: 'Joãozinho Silva',
     birthDate: new Date('2018-05-15'),
@@ -41,12 +51,12 @@ describe('Controlador de Pacientes', () => {
     service = module.get<PatientService>(PatientService);
   });
 
-  it('deve estar definido', () => {
+  it('o controlador deve estar definido', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('criar', () => {
-    it('deve criar um paciente', async () => {
+  describe('criar um paciente com sucesso', () => {
+    it('deve criar um paciente com sucesso e retornar apenas o ID', async () => {
       const createDto: CreatePatientDto = {
         name: 'Joãozinho Silva',
         birthDate: '2018-05-15',
@@ -54,18 +64,18 @@ describe('Controlador de Pacientes', () => {
         isActive: true,
       };
 
-      mockPatientService.create.mockResolvedValue(mockPatientResponse);
+      mockPatientService.create.mockResolvedValue(mockPatientCreatedResponse);
 
       const result = await controller.create(createDto);
 
-      expect(result).toEqual(mockPatientResponse);
+      expect(result).toEqual(mockPatientCreatedResponse);
       expect(service.create).toHaveBeenCalledWith(createDto);
     });
   });
 
-  describe('listarTodos', () => {
-    it('deve retornar um array de pacientes', async () => {
-      const responseArray = [mockPatientResponse];
+  describe('listar todos os pacientes com sucesso', () => {
+    it('deve retornar uma lista de detalhes de pacientes', async () => {
+      const responseArray = [mockPatientDetailsResponse];
       mockPatientService.findAll.mockResolvedValue(responseArray);
 
       const result = await controller.findAll();
@@ -75,32 +85,31 @@ describe('Controlador de Pacientes', () => {
     });
   });
 
-  describe('buscarPorId', () => {
-    it('deve retornar um paciente pelo ID', async () => {
-      mockPatientService.findById.mockResolvedValue(mockPatientResponse);
+  describe('buscar por id com sucesso', () => {
+    it('deve retornar os detalhes de um paciente pelo ID', async () => {
+      mockPatientService.findById.mockResolvedValue(mockPatientDetailsResponse);
 
       const result = await controller.findOne('uuid-1234');
 
-      expect(result).toEqual(mockPatientResponse);
+      expect(result).toEqual(mockPatientDetailsResponse);
       expect(service.findById).toHaveBeenCalledWith('uuid-1234');
     });
   });
 
-  describe('atualizar', () => {
+  describe('atualizar um paciente com sucesso', () => {
     it('deve atualizar um paciente', async () => {
       const updateDto: UpdatePatientDto = { name: 'Novo Nome' };
-      const updatedResponse = { ...mockPatientResponse, name: 'Novo Nome' };
-      
-      mockPatientService.update.mockResolvedValue(updatedResponse);
+
+      mockPatientService.update.mockResolvedValue(undefined);
 
       const result = await controller.update('uuid-1234', updateDto);
 
-      expect(result).toEqual(updatedResponse);
+      expect(result).toBeUndefined();
       expect(service.update).toHaveBeenCalledWith('uuid-1234', updateDto);
     });
   });
 
-  describe('remover', () => {
+  describe('remover um paciente com sucesso', () => {
     it('deve remover (soft delete) um paciente', async () => {
       mockPatientService.remove.mockResolvedValue(undefined);
 

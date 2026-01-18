@@ -44,8 +44,8 @@ describe('Serviço de Pacientes', () => {
     expect(service).toBeDefined();
   });
 
-  describe('criar', () => {
-    it('deve criar um paciente com sucesso', async () => {
+  describe('criar um paciente com sucesso', () => {
+    it('deve criar um paciente com sucesso e retornar apenas o ID', async () => {
       const createDto: CreatePatientDto = {
         name: 'Joãozinho',
         birthDate: '2018-05-15',
@@ -54,7 +54,7 @@ describe('Serviço de Pacientes', () => {
       };
 
       const savedEntity = new Patient(
-        'generated-uuid',
+        'uuid-1234',
         createDto.name,
         new Date(createDto.birthDate),
         createDto.diagnosis!,
@@ -66,14 +66,13 @@ describe('Serviço de Pacientes', () => {
       const result = await service.create(createDto);
 
       expect(result).toBeDefined();
-      expect(result.id).toBe('generated-uuid');
-      expect(result.name).toBe(createDto.name);
+      expect(result.id).toBe('uuid-1234');
       expect(repository.create).toHaveBeenCalled();
     });
   });
 
-  describe('listarTodos', () => {
-    it('deve retornar uma lista de pacientes', async () => {
+  describe('listar todos os pacientes com sucesso', () => {
+    it('deve retornar uma lista de pacientes com detalhes', async () => {
       const patientEntity = new Patient('uuid-1234', 'Maria', new Date('2019-01-01'), null, true);
 
       mockPatientRepository.findAll.mockResolvedValue([patientEntity]);
@@ -86,7 +85,7 @@ describe('Serviço de Pacientes', () => {
     });
   });
 
-  describe('buscarPorId', () => {
+  describe('buscar por id com sucesso', () => {
     it('deve retornar um paciente se encontrado', async () => {
       const patientEntity = new Patient('uuid-1234', 'Maria', new Date('2019-01-01'), null, true);
       mockPatientRepository.findById.mockResolvedValue(patientEntity);
@@ -105,11 +104,11 @@ describe('Serviço de Pacientes', () => {
     });
   });
 
-  describe('atualizar', () => {
+  describe('atualizar um paciente com sucesso', () => {
     it('deve atualizar um paciente com sucesso', async () => {
       const existingPatient = new Patient('uuid-1234', 'Maria', new Date('2019-01-01'), 'TEA', true);
       const updateDto: UpdatePatientDto = { name: 'Maria Silva', isActive: false };
-      
+
       const updatedEntity = new Patient('uuid-1234', 'Maria Silva', new Date('2019-01-01'), 'TEA', false);
 
       mockPatientRepository.findById.mockResolvedValue(existingPatient);
@@ -117,8 +116,7 @@ describe('Serviço de Pacientes', () => {
 
       const result = await service.update('uuid-1234', updateDto);
 
-      expect(result.name).toBe('Maria Silva');
-      expect(result.isActive).toBe(false);
+      expect(result).toBeUndefined();
       expect(repository.update).toHaveBeenCalledWith('uuid-1234', expect.objectContaining({ name: 'Maria Silva' }));
     });
 
@@ -129,7 +127,7 @@ describe('Serviço de Pacientes', () => {
     });
   });
 
-  describe('remover', () => {
+  describe('remover um paciente com sucesso', () => {
     it('deve realizar soft delete (desativar) o paciente', async () => {
       const existingPatient = new Patient('uuid-1234', 'Maria', new Date('2019-01-01'), 'TEA', true);
       const updatedEntity = new Patient('uuid-1234', 'Maria', new Date('2019-01-01'), 'TEA', false);

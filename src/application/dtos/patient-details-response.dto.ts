@@ -3,12 +3,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Patient } from '@domain/entities/patient.entity';
 
 @Exclude()
-export class PatientResponseDto {
+export class PatientDetailsResponseDto {
   @ApiProperty({ example: 'uuid-v4-string' })
   @Expose()
   id: string;
 
-  // Propriedades expostas (importante para o GET/Listagem)
   @ApiProperty({ example: 'Joãozinho Silva' })
   @Expose()
   name: string;
@@ -29,12 +28,12 @@ export class PatientResponseDto {
   @Expose()
   age: number;
 
-  constructor(partial: Partial<PatientResponseDto>) {
+  constructor(partial: Partial<PatientDetailsResponseDto>) {
     Object.assign(this, partial);
   }
 
-  static fromDomain(patient: Patient): PatientResponseDto {
-    return new PatientResponseDto({
+  static fromDomain(patient: Patient): PatientDetailsResponseDto {
+    return new PatientDetailsResponseDto({
       id: patient.id,
       name: patient.name,
       birthDate: patient.birthDate,

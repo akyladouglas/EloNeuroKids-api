@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PatientModule } from './presentation/patient.module';
+import { AuthModule } from './presentation/auth/auth.module';
 
 @Module({
   imports: [
@@ -8,6 +9,7 @@ import { PatientModule } from './presentation/patient.module';
       isGlobal: true, // Disponível em toda a app
     }),
     PatientModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

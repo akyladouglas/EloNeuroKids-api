@@ -23,6 +23,7 @@ async function bootstrap() {
     .setTitle('EloNeuroKids API')
     .setDescription('API for Child Neurodevelopment Clinics Management')
     .setVersion('1.0')
+    .addBearerAuth() // Adiciona suporte a Bearer Token no Swagger
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
