@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama ER - EloKids (Com Identity)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1400px;
+            overflow-x: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #333;
+            max-width: 800px;
+        }
+        .legend strong {
+            color: #007acc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Modelagem de Dados - EloKids</h1>
+        <p>Atualizado com ASP.NET Core Identity (Nomes Customizados de Tabelas).</p>
+        
+        <div class="mermaid">
+            erDiagram
+                %% --- IDENTITY (AUTENTICAÇÃO) ---
+                Users {
+                    string Id "PK - Guid"
+                    string UserName "Login"
+                    string Email
+                    string PasswordHash
+                    string PhoneNumber
+                }
+
+                Roles {
+                    string Id "PK - Guid"
+                    string Name "Ex: Fonoaudiólogo, Psicólogo, Admin"
+                    string NormalizedName
+                }
+
+                UserRoles {
+                    string UserId "FK"
+                    string RoleId "FK"
+                }
+
+                %% --- ANAMNESE ---
+                ANAMNESIS {
+                    uuid Id "PK"
+                    uuid PatientId "FK - Paciente"
+                    string RoleId "FK - Tipo de Ficha (Ex: ID da Role de Fono)"
+                    text HealthHistory "Histórico de Saúde"
+                    text SocialHistory "Histórico Social"
+                    text SocialComplaint "Queixa Social/Principal"
+                    string TermSignature "Assinatura/Termo Compromisso"
+                    datetime LastUpdate "Data Atualização"
+                }
+
+                %% --- METODOLOGIAS (SISTEMA DE ENSINO) ---
+                METHODOLOGIES {
+                    int Id "PK"
+                    string Name "Ex: ABA, Denver"
+                }
+
+                METHODOLOGY_STAGES {
+                    int Id "PK"
+                    int MethodologyId "FK"
+                    string Name "Ex: Aquisição, Fluência"
+                    int OrderIndex "Ordem 1, 2, 3..."
+                }
+
+                %% --- PACIENTE E PEI ---
+                PATIENTS {
+                    uuid Id "PK"
+                    string Name
+                    date BirthDate
+                    string Diagnosis
+                }
+
+                DOMAINS {
+                    int Id "PK"
+                    string Name "Ex: Comunicação"
+                }
+
+                PEIS {
+                    uuid Id "PK"
+                    uuid PatientId "FK"
+                    date StartDate
+                    date EndDate
+                    string Status
+                }
+
+                PEI_GOALS {
+                    uuid Id "PK"
+                    uuid PeiId "FK"
+                    int DomainId "FK"
+                    int CurrentStageId "FK - Etapa Dinâmica"
+                    string Title "Meta"
+                    datetime LastUpdateDate
+                }
+
+                %% --- EXECUÇÃO DIÁRIA ---
+                SESSIONS {
+                    uuid Id "PK"
+                    uuid PatientId "FK"
+                    string ProfessionalUserId "FK - Users.Id"
+                    datetime Date
+                    int Mood
+                    string PublicFeedback
+                }
+
+                SESSION_GOAL_ENTRIES {
+                    uuid Id "PK"
+                    uuid SessionId "FK"
+                    uuid PeiGoalId "FK"
+                    int SupportLevel "Nível Ajuda"
+                    bool MilestoneReached "Mudou de fase?"
+                    int NewStageId "FK"
+                }
+
+                %% --- RELACIONAMENTOS ---
+
+                %% Identity
+                Users ||--o{ UserRoles : "tem"
+                Roles ||--o{ UserRoles : "atribuída a"
+
+                %% Anamnese (A Regra de Ouro)
+                PATIENTS ||--o{ ANAMNESIS : "tem fichas"
+                Roles ||--o{ ANAMNESIS : "categoriza ficha"
+
+                %% Metodologia e PEI
+                METHODOLOGIES ||--o{ METHODOLOGY_STAGES : "possui"
+                PATIENTS ||--o{ PEIS : "possui"
+                PEIS ||--o{ PEI_GOALS : "contém"
+                DOMAINS ||--o{ PEI_GOALS : "categoriza"
+                METHODOLOGY_STAGES ||--o{ PEI_GOALS : "status atual"
+
+                %% Sessões (Agora ligadas ao User do Identity)
+                PATIENTS ||--o{ SESSIONS : "realiza"
+                Users ||--o{ SESSIONS : "conduz (Profissional)"
+                SESSIONS ||--o{ SESSION_GOAL_ENTRIES : "registra"
+                PEI_GOALS ||--o{ SESSION_GOAL_ENTRIES : "evolui"
+                METHODOLOGY_STAGES ||--o{ SESSION_GOAL_ENTRIES : "nova fase"
+        </div>
+
+        <div class="legend">
+            <h3>Mudanças com Identity (Tabelas Customizadas):</h3>
+            <ul>
+                <li><strong>Users:</strong> Tabela central de usuários (antes AspNetUsers). Login, Senha, Dados Pessoais.</li>
+                <li><strong>Roles:</strong> Define os cargos (antes AspNetRoles). Ex: Admin, Fonoaudiólogo.</li>
+                <li><strong>UserRoles:</strong> Tabela associativa Usuário <-> Cargo (antes AspNetUserRoles).</li>
+                <li><strong>Sessões (SESSIONS):</strong> Apontam para <code>Users.Id</code>.</li>
+                <li><strong>Anamnese (ANAMNESIS):</strong> Vinculada a <code>Roles.Id</code>.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            er: {
+                diagramPadding: 20,
+                layoutDirection: 'TB',
+                minEntityWidth: 100,
+                entityPadding: 15
+            }
+        });
+    </script>
+</body>
+</html>
