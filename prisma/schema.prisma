@@ -1,0 +1,152 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+enum SupportLevel {
+  FULL_PHYSICAL
+  PARTIAL_PHYSICAL
+  VERBAL
+  GESTURAL
+  INDEPENDENT
+}
+
+enum Mood {
+  HAPPY
+  TIRED
+  AGITATED
+  SICK
+}
+
+// --- ENTITIES ---
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  // Relacionamentos
+  roles    UserRole[]
+  sessions Session[] // Profissional que atendeu
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String @unique // Ex: FONOAUDIOLOGO, PSICOLOGO
+
+  userRoles UserRole[]
+  anamneses Anamnesis[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  name      String
+  birthDate DateTime
+  diagnosis String?
+  isActive  Boolean  @default(true)
+
+  anamneses Anamnesis[]
+  peis      Pei[]
+  sessions  Session[]
+}
+
+model Anamnesis {
+  id              String  @id @default(uuid())
+  patientId       String
+  roleId          String
+  healthHistory   String  @db.Text
+  socialHistory   String  @db.Text
+  socialComplaint String  @db.Text
+  termSignature   String?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  role    Role    @relation(fields: [roleId], references: [id])
+
+  // REGRA DE OURO: Única anamnese de Paciente por Cargo
+  @@unique([patientId, roleId])
+}
+
+model Methodology {
+  id     Int                @id @default(autoincrement())
+  name   String // Ex: ABA
+  stages MethodologyStage[]
+}
+
+model MethodologyStage {
+  id            Int    @id @default(autoincrement())
+  methodologyId Int
+  name          String // Ex: Aquisição
+  orderIndex    Int // 1, 2, 3
+
+  methodology     Methodology        @relation(fields: [methodologyId], references: [id])
+  currentGoals    PeiGoal[]          @relation("CurrentStage")
+  newStageEntries SessionGoalEntry[]
+}
+
+model Pei {
+  id        String    @id @default(uuid())
+  patientId String
+  startDate DateTime
+  endDate   DateTime?
+  status    String // ACTIVE, ARCHIVED
+
+  patient Patient   @relation(fields: [patientId], references: [id])
+  goals   PeiGoal[]
+}
+
+model PeiGoal {
+  id             String  @id @default(uuid())
+  peiId          String
+  currentStageId Int
+  title          String
+  description    String?
+
+  pei          Pei              @relation(fields: [peiId], references: [id])
+  currentStage MethodologyStage @relation("CurrentStage", fields: [currentStageId], references: [id])
+  entries      SessionGoalEntry[]
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  patientId      String
+  professionalId String
+  date           DateTime @default(now())
+  mood           Mood
+  publicFeedback String?
+
+  patient      Patient            @relation(fields: [patientId], references: [id])
+  professional User               @relation(fields: [professionalId], references: [id])
+  entries      SessionGoalEntry[]
+}
+
+model SessionGoalEntry {
+  id               String       @id @default(uuid())
+  sessionId        String
+  peiGoalId        String
+  supportLevel     SupportLevel
+  quickNotes       String?
+  milestoneReached Boolean      @default(false)
+  newStageId       Int?
+
+  session  Session           @relation(fields: [sessionId], references: [id])
+  goal     PeiGoal           @relation(fields: [peiGoalId], references: [id])
+  newStage MethodologyStage? @relation(fields: [newStageId], references: [id])
+}
